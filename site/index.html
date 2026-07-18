@@ -51,6 +51,7 @@
 
                     <a href="https://github.com/IrokuTech"
                         target="_blank"
+                        rel="noopener noreferrer"
                         class="secondary-btn">
                             GitHub
                     </a>
@@ -95,26 +96,41 @@
         </section>
 
         <section id="projects">
-
-             <h2>Featured Projects</h2>
+            <h2>Featured Projects</h2>
 
             <div class="projects-grid">
 
                 <article class="project-card">
 
-                    <h3>DevOps Static Site</h3>
+                    <div class="project-card-header">
+                        <h3>DevOps Static Site</h3>
+                        <span class="project-status">In Progress</span>
+                    </div>
 
                     <p>
-                        Personal portfolio built with HTML, CSS and JavaScript,
-                        deployed automatically using GitHub Pages.
+                        A personal portfolio built to practise Git, GitHub,
+                        CI/CD and automated static website deployment.
                     </p>
 
-                    <span>In Progress</span>
+                    <ul class="project-technologies">
+                        <li>HTML</li>
+                        <li>CSS</li>
+                        <li>GitHub Pages</li>
+                        <li>GitHub Actions</li>
+                    </ul>
+
+                    <a
+                        href="https://github.com/IrokuTech/devops-static-site"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="project-link"
+                    >
+                        View repository →
+                    </a>
 
                 </article>
 
             </div>
-
         </section>
 
         <section id="roadmap">
@@ -141,7 +157,7 @@
         <p>
             Built by Yile · 2026
         </p>
-        
+
     </footer>
 
     <script src="script.js"></script>
