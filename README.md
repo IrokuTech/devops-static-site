@@ -35,6 +35,8 @@ The objective is not to build a complex frontend application, but to show a clea
 | Category | Technologies |
 |----------|--------------|
 | Frontend | HTML5, CSS3, JavaScript |
+| Web Server | Nginx |
+| Containerisation | Docker |
 | Version Control | Git |
 | Repository Hosting | GitHub |
 | CI/CD | GitHub Actions |
@@ -61,6 +63,8 @@ devops-static-site/
 │   ├── style.css
 │   └── script.js
 │
+├── Dockerfile
+├── .dockerignore
 ├── .gitignore
 └── README.md
 ```
@@ -134,6 +138,8 @@ main
  ├── feature/github-pages-deploy
  │
  └── feature/readme-documentation
+ │
+ └── feature/docker-introduction
 ```
 
 Typical workflow:
@@ -188,6 +194,45 @@ site/index.html
 
 ---
 
+## Running with Docker
+
+Build the Docker image:
+
+```bash
+docker build -t devops-static-site:v1 .
+```
+
+Run the container:
+
+```bash
+docker run -d \
+  --name devops-static-site \
+  -p 8080:80 \
+  devops-static-site:v1
+```
+
+Open the website:
+
+```text
+http://localhost:8080
+```
+
+Stop the container:
+
+```bash
+docker stop devops-static-site
+```
+
+Remove the container:
+
+```bash
+docker rm devops-static-site
+```
+
+The application is served by an Nginx container using the official `nginx:alpine` image.
+
+---
+
 ## Current Status
 
 ✔ Linux development environment (WSL2)
@@ -204,6 +249,8 @@ site/index.html
 
 ✔ GitHub Pages hosting
 
+✔ Docker containerisation
+
 ✔ Public website available
 
 ---
@@ -216,7 +263,6 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Docker
 - Docker Compose
 - Nginx
 - Terraform
@@ -239,6 +285,8 @@ Some of the concepts practiced include:
 - GitHub Actions
 - GitHub Pages
 - CI/CD principles
+- Docker image creation
+- Container lifecycle management
 - Deployment automation
 - Technical documentation
 
