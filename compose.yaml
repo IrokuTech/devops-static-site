@@ -1,0 +1,49 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - devops-static-network
+
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_NAME: portfolio
+      DB_USER: portfolio_user
+      DB_PASSWORD: portfolio_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - devops-static-network
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: portfolio_user
+      POSTGRES_PASSWORD: portfolio_pass
+    volumes:
+      - devops-static-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U portfolio_user -d portfolio
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devops-static-network
+
+networks:
+  devops-static-network:
+
+volumes:
+  devops-static-db-data:
