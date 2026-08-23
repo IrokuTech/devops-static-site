@@ -35,8 +35,10 @@ The objective is not to build a complex frontend application, but to show a clea
 | Category | Technologies |
 |----------|--------------|
 | Frontend | HTML5, CSS3, JavaScript |
+| Backend | Python, Flask |
+| Database | PostgreSQL |
 | Web Server | Nginx |
-| Containerisation | Docker |
+| Containerisation | Docker, Docker Compose |
 | Version Control | Git |
 | Repository Hosting | GitHub |
 | CI/CD | GitHub Actions |
@@ -54,16 +56,21 @@ devops-static-site/
 │   └── workflows/
 │       └── deploy.yml
 │
+├── api/
+│   ├── Dockerfile
+│   ├── app.py
+│   └── requirements.txt
+│
 ├── site/
 │   ├── assets/
 │   │   ├── images/
 │   │   └── icons/
-│   │
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
 │
 ├── Dockerfile
+├── compose.yaml
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -126,6 +133,34 @@ The workflow also supports manual execution using `workflow_dispatch`.
 
 ---
 
+## Local Docker Compose Architecture
+
+```text
+Frontend
+Nginx :80
+   │
+   │ Docker Compose network
+   │
+   ├──────────────┐
+   │              │
+   ▼              ▼
+Flask API      PostgreSQL
+:8000          :5432
+   │              │
+   └──────────────►
+                  │
+                  ▼
+          Persistent volume
+```
+
+Docker Compose orchestrates the three local services using a shared network.
+
+The Flask API connects to PostgreSQL using the `db` service name as its database host. PostgreSQL stores the visit counter in a named volume so that the data survives container recreation.
+
+A database healthcheck is used together with `depends_on` to ensure that the API starts only after PostgreSQL is ready to accept connections.
+
+---
+
 ## Git Workflow
 
 Development follows a feature branch strategy.
@@ -140,6 +175,8 @@ main
  └── feature/readme-documentation
  │
  └── feature/docker-introduction
+ │
+ └── feature/docker-compose
 ```
 
 Typical workflow:
@@ -231,6 +268,58 @@ docker rm devops-static-site
 
 The application is served by an Nginx container using the official `nginx:alpine` image.
 
+## Running with Docker Compose
+
+The complete local stack consists of three services:
+
+- Nginx frontend
+- Flask API
+- PostgreSQL database
+
+Build and start the stack:
+
+```bash
+docker compose up --build -d
+```
+
+Check the service status:
+
+```bash
+docker compose ps
+```
+
+The frontend is available at:
+
+```text
+http://localhost:8080
+```
+
+Check the API health endpoint:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Increment and retrieve the persistent visit counter:
+
+```bash
+curl http://localhost:8000/api/visits
+```
+
+View service logs:
+
+```bash
+docker compose logs
+```
+
+Stop and remove the containers and Compose network:
+
+```bash
+docker compose down
+```
+
+The PostgreSQL data is stored in a named Docker volume and is preserved by `docker compose down` unless the volume is explicitly removed.
+
 ---
 
 ## Current Status
@@ -253,6 +342,14 @@ The application is served by an Nginx container using the official `nginx:alpine
 
 ✔ Public website available
 
+✔ Docker Compose multi-service orchestration
+
+✔ Flask API
+
+✔ PostgreSQL persistence
+
+✔ Container healthcheck and service dependency
+
 ---
 
 ## Roadmap
@@ -263,7 +360,7 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Docker Compose
+- Complete and merge Docker Compose phase
 - Nginx
 - Terraform
 - Kubernetes
@@ -289,6 +386,11 @@ Some of the concepts practiced include:
 - Container lifecycle management
 - Deployment automation
 - Technical documentation
+- Docker Compose service orchestration
+- Docker networking and service discovery
+- Environment-based service configuration
+- PostgreSQL persistence with named volumes
+- Container healthchecks and startup dependencies
 
 ---
 
