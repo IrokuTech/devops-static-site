@@ -5,14 +5,14 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
+    depends_on:
+      - api
     networks:
       - devops-static-network
 
   api:
     build:
       context: ./api
-    ports:
-      - "8000:8000"
     environment:
       DB_HOST: db
       DB_NAME: portfolio
