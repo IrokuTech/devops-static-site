@@ -1,8 +1,8 @@
 # DevOps Static Site
 
-A static portfolio website built to demonstrate a professional Git workflow, continuous deployment with GitHub Actions, and automated hosting through GitHub Pages.
+A portfolio project built to demonstrate professional Git workflows, CI/CD, containerisation, multi-service orchestration, reverse proxy configuration, and automated hosting through GitHub Pages.
 
-The project intentionally uses only HTML, CSS and JavaScript to keep the focus on DevOps practices rather than frontend frameworks.
+The frontend remains intentionally simple so that the project can focus on DevOps practices and infrastructure concepts rather than application complexity.
 
 ---
 
@@ -70,6 +70,7 @@ devops-static-site/
 │   └── script.js
 │
 ├── Dockerfile
+├── nginx.conf
 ├── compose.yaml
 ├── .dockerignore
 ├── .gitignore
@@ -136,28 +137,44 @@ The workflow also supports manual execution using `workflow_dispatch`.
 ## Local Docker Compose Architecture
 
 ```text
-Frontend
-Nginx :80
-   │
-   │ Docker Compose network
-   │
-   ├──────────────┐
-   │              │
-   ▼              ▼
-Flask API      PostgreSQL
-:8000          :5432
-   │              │
-   └──────────────►
-                  │
-                  ▼
-          Persistent volume
+Client
+  │
+  │ localhost:8080
+  ▼
+Nginx
+  │
+  ├── /              → Static portfolio files
+  │
+  ├── /health ───────┐
+  │                  │
+  └── /api/* ────────┤
+                     ▼
+                 Flask API
+                   :8000
+                     │
+                     ▼
+                 PostgreSQL
+                   :5432
+                     │
+                     ▼
+              Persistent volume
 ```
 
-Docker Compose orchestrates the three local services using a shared network.
+Docker Compose orchestrates three services on a shared internal network:
 
-The Flask API connects to PostgreSQL using the `db` service name as its database host. PostgreSQL stores the visit counter in a named volume so that the data survives container recreation.
+- `frontend` — Nginx serves the static portfolio and acts as the reverse proxy.
+- `api` — Flask provides the application endpoints.
+- `db` — PostgreSQL stores the persistent visit counter.
 
-A database healthcheck is used together with `depends_on` to ensure that the API starts only after PostgreSQL is ready to accept connections.
+Nginx is the only service exposed to the host for application traffic, through `localhost:8080`. The Flask API listens on port `8000` inside the Docker network but is not published directly to the host.
+
+Requests to `/` are served directly by Nginx from the static site. Requests to `/health` and `/api/*` are forwarded to the Flask service using Docker Compose service discovery at `api:8000`.
+
+The reverse proxy forwards the `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto` headers so that the backend receives information about the original client request.
+
+The Flask API connects to PostgreSQL using the `db` service name. PostgreSQL stores its data in a named volume so that the visit counter survives container recreation.
+
+PostgreSQL uses a healthcheck together with a conditional `depends_on` configuration so that the API waits for the database to become healthy. The frontend also depends on the API for startup ordering; this dependency does not provide an API readiness guarantee.
 
 ---
 
@@ -169,14 +186,11 @@ Development follows a feature branch strategy.
 main
  │
  ├── feature/homepage
- │
  ├── feature/github-pages-deploy
- │
- └── feature/readme-documentation
- │
- └── feature/docker-introduction
- │
- └── feature/docker-compose
+ ├── feature/readme-documentation
+ ├── feature/docker-introduction
+ ├── feature/docker-compose
+ └── feature/nginx-reverse-proxy
 ```
 
 Typical workflow:
@@ -294,16 +308,37 @@ The frontend is available at:
 http://localhost:8080
 ```
 
-Check the API health endpoint:
+Check the API health endpoint through Nginx:
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8080/health
 ```
 
-Increment and retrieve the persistent visit counter:
+Increment and retrieve the persistent visit counter through Nginx:
 
 ```bash
-curl http://localhost:8000/api/visits
+curl http://localhost:8080/api/visits
+```
+
+The Flask API is intentionally not published directly to the host. Application traffic reaches it through the Nginx reverse proxy and the internal Docker Compose network.
+
+Validate the Nginx configuration:
+
+```bash
+docker compose exec frontend nginx -t
+```
+
+Inspect the complete Nginx configuration loaded inside the container:
+
+```bash
+docker compose exec frontend nginx -T
+```
+
+View Nginx and API logs:
+
+```bash
+docker compose logs frontend
+docker compose logs api
 ```
 
 View service logs:
@@ -344,6 +379,12 @@ The PostgreSQL data is stored in a named Docker volume and is preserved by `dock
 
 ✔ Docker Compose multi-service orchestration
 
+✔ Nginx reverse proxy
+
+✔ Internal API routing through Nginx
+
+✔ Backend API isolated from direct host access
+
 ✔ Flask API
 
 ✔ PostgreSQL persistence
@@ -360,8 +401,7 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Complete and merge Docker Compose phase
-- Nginx
+- Complete and merge Nginx reverse proxy phase
 - Terraform
 - Kubernetes
 - Monitoring stack
@@ -391,6 +431,12 @@ Some of the concepts practiced include:
 - Environment-based service configuration
 - PostgreSQL persistence with named volumes
 - Container healthchecks and startup dependencies
+- Nginx reverse proxy configuration
+- Reverse proxy routing
+- Docker internal vs published ports
+- Docker Compose service discovery
+- Forwarded HTTP headers
+- Nginx configuration validation and logs
 
 ---
 
