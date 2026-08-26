@@ -10,15 +10,15 @@ terraform {
 provider "docker" {}
 
 resource "docker_network" "terraform_lab" {
-  name = "terraform-lab-network"
+  name = var.network_name
 }
 
 resource "docker_image" "nginx" {
-  name = "nginx:alpine"
+  name = var.nginx_image
 }
 
 resource "docker_container" "nginx_lab" {
-  name  = "terraform-nginx-lab"
+  name  = var.container_name
   image = docker_image.nginx.image_id
 
   networks_advanced {
@@ -27,6 +27,6 @@ resource "docker_container" "nginx_lab" {
 
   ports {
     internal = 80
-    external = 8081
+    external = var.external_port
   }
 }
