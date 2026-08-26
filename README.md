@@ -44,6 +44,7 @@ The objective is not to build a complex frontend application, but to show a clea
 | CI/CD | GitHub Actions |
 | Deployment | GitHub Pages |
 | Development Environment | WSL2, Ubuntu 24.04, Visual Studio Code |
+| Infrastructure as Code | Terraform |
 
 ---
 
@@ -68,6 +69,12 @@ devops-static-site/
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
+│
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── .terraform.lock.hcl
 │
 ├── Dockerfile
 ├── nginx.conf
@@ -357,6 +364,78 @@ The PostgreSQL data is stored in a named Docker volume and is preserved by `dock
 
 ---
 
+## Terraform Lab
+
+The repository includes a local Terraform lab for practicing Infrastructure as Code concepts with Docker.
+
+This lab is intentionally independent from the main Docker Compose application stack. Terraform manages its own Nginx container and Docker network for learning purposes; it does not manage the Flask, PostgreSQL, or Nginx services defined in `compose.yaml`.
+
+Initialize the Terraform working directory:
+
+```bash
+cd terraform
+terraform init
+```
+
+Format and validate the configuration:
+
+```bash
+terraform fmt
+terraform validate
+```
+
+Preview the infrastructure changes:
+
+```bash
+terraform plan
+```
+
+Create the lab infrastructure:
+
+```bash
+terraform apply
+```
+
+The default Nginx endpoint is:
+
+```text
+http://localhost:8081
+```
+
+Inspect the Terraform-managed resources and outputs:
+
+```bash
+terraform state list
+terraform output
+```
+
+Input variables can override the default configuration without modifying the Terraform source files. For example:
+
+```bash
+terraform plan -var="external_port=9090"
+```
+
+Destroy the Terraform-managed lab infrastructure:
+
+```bash
+terraform destroy
+```
+
+Local Terraform state and provider files are excluded from version control. The dependency lock file `.terraform.lock.hcl` is committed to keep provider selections reproducible.
+
+The lab currently demonstrates:
+
+- Terraform providers and provider version constraints
+- Docker resources managed through Terraform
+- Input variables and outputs
+- Terraform state
+- Implicit resource dependencies
+- Data sources
+- Docker registry image digest tracking with `pull_triggers`
+- Infrastructure lifecycle with `plan`, `apply`, and `destroy`
+
+---
+
 ## Current Status
 
 ✔ Linux development environment (WSL2)
@@ -381,6 +460,12 @@ The PostgreSQL data is stored in a named Docker volume and is preserved by `dock
 
 ✔ Nginx reverse proxy
 
+✔ Terraform Infrastructure as Code lab
+
+✔ Terraform-managed Docker resources
+
+✔ Terraform variables, outputs, state, and data sources
+
 ✔ Internal API routing through Nginx
 
 ✔ Backend API isolated from direct host access
@@ -401,8 +486,6 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Complete and merge Nginx reverse proxy phase
-- Terraform
 - Kubernetes
 - Monitoring stack
 
@@ -437,6 +520,13 @@ Some of the concepts practiced include:
 - Docker Compose service discovery
 - Forwarded HTTP headers
 - Nginx configuration validation and logs
+- Infrastructure as Code principles
+- Terraform provider and resource configuration
+- Terraform state management
+- Terraform plan, apply, and destroy lifecycle
+- Terraform input variables and outputs
+- Terraform implicit dependencies
+- Terraform data sources
 
 ---
 
