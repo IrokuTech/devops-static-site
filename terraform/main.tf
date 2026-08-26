@@ -13,8 +13,13 @@ resource "docker_network" "terraform_lab" {
   name = var.network_name
 }
 
-resource "docker_image" "nginx" {
+data "docker_registry_image" "nginx" {
   name = var.nginx_image
+}
+
+resource "docker_image" "nginx" {
+  name          = data.docker_registry_image.nginx.name
+  pull_triggers = [data.docker_registry_image.nginx.sha256_digest]
 }
 
 resource "docker_container" "nginx_lab" {
