@@ -3,3 +3,6 @@
 *.tfstate
 *.tfstate.*
 .terraform.tfstate.lock.info
+
+# Kubernetes local secrets
+kubernetes/secret.yaml
