@@ -1,6 +1,6 @@
 # DevOps Static Site
 
-A portfolio project built to demonstrate professional Git workflows, CI/CD, containerisation, multi-service orchestration, reverse proxy configuration, and automated hosting through GitHub Pages.
+A portfolio project built to demonstrate professional Git workflows, CI/CD, containerisation, multi-service orchestration, reverse proxy configuration, Infrastructure as Code, local Kubernetes orchestration, and automated hosting through GitHub Pages.
 
 The frontend remains intentionally simple so that the project can focus on DevOps practices and infrastructure concepts rather than application complexity.
 
@@ -45,6 +45,7 @@ The objective is not to build a complex frontend application, but to show a clea
 | Deployment | GitHub Pages |
 | Development Environment | WSL2, Ubuntu 24.04, Visual Studio Code |
 | Infrastructure as Code | Terraform |
+| Container Orchestration | Kubernetes, kubectl, Kind |
 
 ---
 
@@ -75,6 +76,14 @@ devops-static-site/
 │   ├── variables.tf
 │   ├── outputs.tf
 │   └── .terraform.lock.hcl
+│
+├── kubernetes/
+│   ├── README.md
+│   ├── namespace.yaml
+│   ├── configmap.yaml
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── secret.example.yaml
 │
 ├── Dockerfile
 ├── nginx.conf
@@ -197,7 +206,9 @@ main
  ├── feature/readme-documentation
  ├── feature/docker-introduction
  ├── feature/docker-compose
- └── feature/nginx-reverse-proxy
+ ├── feature/nginx-reverse-proxy
+ ├── feature/terraform-introduction
+ └── feature/kubernetes-introduction
 ```
 
 Typical workflow:
@@ -436,6 +447,73 @@ The lab currently demonstrates:
 
 ---
 
+## Kubernetes Local Lab
+
+The repository includes a reproducible local Kubernetes lab using Kind.
+
+This lab is intentionally independent from the Docker Compose and Terraform environments. It is designed to practise core Kubernetes concepts locally without requiring external cloud infrastructure.
+
+The lab includes:
+
+- A dedicated `devops-lab` Namespace
+- A ConfigMap for application configuration
+- A locally created Secret that is not committed to Git
+- An Nginx Deployment with two replicas
+- A ClusterIP Service
+- Kubernetes DNS and service discovery
+- EndpointSlice inspection
+- Deployment rollout and rollback workflows
+- Local access using `kubectl port-forward`
+
+Create the Namespace and ConfigMap:
+
+```bash
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/configmap.yaml
+```
+
+Create the Secret locally:
+
+```bash
+kubectl create secret generic nginx-secret \
+  --from-literal=DEMO_PASSWORD='change-me' \
+  -n devops-lab
+```
+
+Apply the Deployment and Service:
+
+```bash
+kubectl apply -f kubernetes/deployment.yaml
+kubectl apply -f kubernetes/service.yaml
+```
+
+Verify the Deployment and Service:
+
+```bash
+kubectl rollout status deployment/nginx-demo -n devops-lab
+kubectl get pods -n devops-lab
+kubectl get service nginx-service -n devops-lab
+kubectl get endpointslice -n devops-lab
+```
+
+Access the Service locally:
+
+```bash
+kubectl port-forward service/nginx-service 8082:80 -n devops-lab
+```
+
+Then test it from another terminal:
+
+```bash
+curl http://localhost:8082
+```
+
+The lab was validated by deleting the `devops-lab` Namespace and rebuilding the complete environment from the documented procedure.
+
+Real Kubernetes credentials are not committed to the repository. `kubernetes/secret.example.yaml` documents only the expected Secret structure.
+
+---
+
 ## Current Status
 
 ✔ Linux development environment (WSL2)
@@ -466,6 +544,14 @@ The lab currently demonstrates:
 
 ✔ Terraform variables, outputs, state, and data sources
 
+✔ Local Kubernetes lab with Kind
+
+✔ Kubernetes Namespace, Deployment, Service, ConfigMap, and Secret management
+
+✔ Kubernetes service discovery, rollout, rollback, and port-forwarding
+
+✔ Reproducible Kubernetes environment reconstruction
+
 ✔ Internal API routing through Nginx
 
 ✔ Backend API isolated from direct host access
@@ -486,7 +572,6 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Kubernetes
 - Monitoring stack
 
 ---
@@ -527,6 +612,19 @@ Some of the concepts practiced include:
 - Terraform input variables and outputs
 - Terraform implicit dependencies
 - Terraform data sources
+- Kubernetes cluster fundamentals
+- Kubernetes Namespaces
+- Deployments and ReplicaSets
+- Kubernetes reconciliation
+- Labels and selectors
+- ClusterIP Services
+- Kubernetes DNS and service discovery
+- EndpointSlices
+- ConfigMaps and Secrets
+- Kubernetes logs and resource inspection
+- Deployment rollout and rollback
+- Local Kubernetes development with Kind
+- Reproducible Kubernetes environment reconstruction
 
 ---
 
