@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: devops-lab
+data:
+  alerts.yml: |
+    groups:
+      - name: flask-api-alerts
+        rules:
+          - alert: FlaskAPIUnavailable
+            expr: up{job="flask-api"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Flask API is unavailable"
+              description: "Prometheus has been unable to scrape the Flask API for at least 1 minute."

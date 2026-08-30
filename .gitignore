@@ -6,3 +6,7 @@
 
 # Kubernetes local secrets
 kubernetes/secret.yaml
+
+# Python
+__pycache__/
+*.py[cod]
