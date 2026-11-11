@@ -46,6 +46,7 @@ The objective is not to build a complex frontend application, but to show a clea
 | Development Environment | WSL2, Ubuntu 24.04, Visual Studio Code |
 | Infrastructure as Code | Terraform |
 | Container Orchestration | Kubernetes, kubectl, Kind |
+| Monitoring | Prometheus, Grafana, prometheus-client |
 
 ---
 
@@ -64,9 +65,6 @@ devops-static-site/
 │   └── requirements.txt
 │
 ├── site/
-│   ├── assets/
-│   │   ├── images/
-│   │   └── icons/
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
@@ -83,7 +81,17 @@ devops-static-site/
 │   ├── configmap.yaml
 │   ├── deployment.yaml
 │   ├── service.yaml
-│   └── secret.example.yaml
+│   ├── secret.example.yaml
+│   ├── api-deployment.yaml
+│   ├── api-service.yaml
+│   ├── postgres-deployment.yaml
+│   ├── postgres-service.yaml
+│   ├── prometheus-configmap.yaml
+│   ├── prometheus-rules.yaml
+│   ├── prometheus-deployment.yaml
+│   ├── prometheus-service.yaml
+│   ├── grafana-deployment.yaml
+│   └── grafana-service.yaml
 │
 ├── Dockerfile
 ├── nginx.conf
@@ -512,6 +520,62 @@ The lab was validated by deleting the `devops-lab` Namespace and rebuilding the 
 
 Real Kubernetes credentials are not committed to the repository. `kubernetes/secret.example.yaml` documents only the expected Secret structure.
 
+### Monitoring Stack
+
+The Kubernetes lab also runs the Flask API and PostgreSQL inside the cluster, monitored with Prometheus and Grafana.
+
+How it works:
+
+- The Flask API is instrumented with `prometheus-client` and exposes custom metrics at `/metrics`:
+  - `http_requests_total`: requests by method, endpoint and status code
+  - `http_request_errors_total`: requests that returned an error (4xx/5xx)
+  - `http_request_duration_seconds`: request latency histogram
+- Prometheus scrapes `flask-api-service:8000/metrics` every 15 seconds.
+- An alert rule, `FlaskAPIUnavailable`, fires when the API cannot be scraped for at least 1 minute.
+- Grafana runs in the same Namespace and uses Prometheus as its data source.
+
+Create the application Secret locally (not committed to Git):
+
+```bash
+kubectl create secret generic app-secret \
+  --from-literal=DB_NAME='portfolio' \
+  --from-literal=DB_USER='portfolio_user' \
+  --from-literal=DB_PASSWORD='change-me' \
+  -n devops-lab
+```
+
+Build the API image and load it into the Kind cluster:
+
+```bash
+docker compose build api
+kind load docker-image devops-static-site-api:latest
+```
+
+Deploy PostgreSQL, the API and the monitoring stack:
+
+```bash
+kubectl apply -f kubernetes/postgres-deployment.yaml
+kubectl apply -f kubernetes/postgres-service.yaml
+kubectl apply -f kubernetes/api-deployment.yaml
+kubectl apply -f kubernetes/api-service.yaml
+kubectl apply -f kubernetes/prometheus-configmap.yaml
+kubectl apply -f kubernetes/prometheus-rules.yaml
+kubectl apply -f kubernetes/prometheus-deployment.yaml
+kubectl apply -f kubernetes/prometheus-service.yaml
+kubectl apply -f kubernetes/grafana-deployment.yaml
+kubectl apply -f kubernetes/grafana-service.yaml
+```
+
+Access Prometheus and Grafana locally:
+
+```bash
+kubectl port-forward service/prometheus-service 9090:9090 -n devops-lab
+kubectl port-forward service/grafana-service 3000:3000 -n devops-lab
+```
+
+- Prometheus: `http://localhost:9090` (check **Status → Targets** and **Alerts**)
+- Grafana: `http://localhost:3000` (add `http://prometheus-service:9090` as a Prometheus data source)
+
 ---
 
 ## Current Status
@@ -552,6 +616,14 @@ Real Kubernetes credentials are not committed to the repository. `kubernetes/sec
 
 ✔ Reproducible Kubernetes environment reconstruction
 
+✔ Flask API and PostgreSQL running in Kubernetes
+
+✔ Custom application metrics with prometheus-client
+
+✔ Prometheus monitoring and alert rules
+
+✔ Grafana deployed in the cluster
+
 ✔ Internal API routing through Nginx
 
 ✔ Backend API isolated from direct host access
@@ -572,7 +644,7 @@ Planned improvements include:
 - Accessibility enhancements
 - Custom favicon
 - Additional portfolio projects
-- Monitoring stack
+- Grafana dashboards provisioned as code
 
 ---
 
@@ -625,6 +697,9 @@ Some of the concepts practiced include:
 - Deployment rollout and rollback
 - Local Kubernetes development with Kind
 - Reproducible Kubernetes environment reconstruction
+- Application instrumentation with Prometheus metrics
+- Prometheus scrape configuration and alert rules
+- Observability with Grafana
 
 ---
 
